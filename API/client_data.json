@@ -1,0 +1,16 @@
+[
+    {
+        "id": 1,
+        "debts": 1000,
+        "late_payments": 0,
+        "bankruptcy": 0,
+        "loan_amount": 3000
+    },
+    {
+        "id": 2,
+        "debts": 1500,
+        "late_payments": 1,
+        "bankruptcy": 0,
+        "loan_amount": 2500
+    }
+]
