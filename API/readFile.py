@@ -1,13 +1,10 @@
 import logging
-import sys
 import re
-import json
-import uuid
-import xml.etree.ElementTree as ET
-import os
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from db_services.demande_pret import insert_demande_pret
+
 
 app = FastAPI()
 securite = HTTPBearer()
@@ -33,14 +30,15 @@ async def read_file(file_name, credentials: HTTPAuthorizationCredentials = Depen
 
             # Define patterns for extracting information
             patterns = {
-                'Nom_du_Client': r"je m'appelle (\w+ \w+),",
-                'Adresse': r"je vis au (\d+ [a-zA-Z\s]+) a ([a-zA-Z]+)\.",
-                'Email': r"par mail : (.+@.+\..+)",
-                'Numero_de_Telephone': r"me contacter : \+(\d+)",
-                'Montant_du_Pret_Demande': r"pret de (\d+€)",
-                'Duree_du_Pret': r"pour (\d+) ans",
-                'Revenu_mensuel': r"je gagne (\d+€)",
-                'Depenses_Mensuelles': r"depenses environ (\d+€)",
+                'nom_client': r"je m'appelle (\w+ \w+),",
+                'adresse': r"je vis au (\d+ [a-zA-Z\s]+) a ([a-zA-Z]+)\.",
+                'email': r"par mail : (.+@.+\..+)",
+                'num_de_tel': r"me contacter : \+(\d+)",
+                'montant_pret_demande': r"pret de (\d+€)",
+                'duree_pret': r"pour (\d+) ans",
+                'revenu_mensuel': r"je gagne (\d+€)",
+                'depenses_mensuelles': r"depenses environ (\d+€)",
+                'statut_demande': "pending"
             }
 
             extracted_info = {}
@@ -58,8 +56,10 @@ async def read_file(file_name, credentials: HTTPAuthorizationCredentials = Depen
                 match = re.search(pattern, content, re.IGNORECASE)
                 if match:
                     extracted_info[category] = match.group(1)
-
-            return extracted_info
+            response = insert_demande_pret(extracted_info)
+            if response != -1:
+                print("Demande insérée avec succès")
+                return response
 
 
     except FileNotFoundError:

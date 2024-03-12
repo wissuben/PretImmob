@@ -66,9 +66,9 @@ class FileHandler(FileSystemEventHandler):
             response_solvency_verification = ""
             if client_data:
                 # Process the file using the corresponding data
-                monthly_expenses = float(response["Depenses_Mensuelles"].replace('€', ''))
-                monthly_income = float(response["Revenu_mensuel"].replace('€', ''))
-                loan_amount = float(response["Montant_du_Pret_Demande"].replace('€', ''))
+                monthly_expenses = float(response["depenses_mensuelles"].replace('€', ''))
+                monthly_income = float(response["revenu_mensuelles"].replace('€', ''))
+                loan_amount = float(response["montant_pret_demande"].replace('€', ''))
 
                 # request = client_scoring.factory.create('CreditScoreRequest')
 #                request.debts = client_data['debts']
