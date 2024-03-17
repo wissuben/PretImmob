@@ -5,9 +5,12 @@ import json
 from fastapi import FastAPI, HTTPException, Depends, status
 import requests
 from propertyEvaluationService import InspectionInfo, LegalCompliance
+from db_services.demande_pret import select_demande_pret_by_id, update_scoring_by_id, update_solvency_by_id, update_property_valuation_by_id, update_decision_by_id
+from db_services.client_history import select_client_history_by_id
 
 
-api_Extraction_url = "http://localhost:8001/read_file"
+
+api_Extraction_url = "http://localhost:8009/read_file"
 api_EvalPropriete_url = "http://localhost:8008/EvaluateProperty"
 api_CalculScore_url = "http://localhost:8003/calculate_credit_score"
 api_VerifSolva_url = "http://localhost:8002/verify_solvency"
@@ -54,20 +57,20 @@ class FileHandler(FileSystemEventHandler):
             except:
                 print("Erreur INVALID Token !")
                 return
+            response = select_demande_pret_by_id(response['id_demande_pret'])
             response["id"] = self.current_id
+            print(response)
             file_id = response["id"]
 
-            # Load the JSON data
-            with open('client_data.json', 'r') as file:
-                clients_data = json.load(file)
+
 
             # Find the data corresponding to the `id` from the file
-            client_data = next((client for client in clients_data if client['id'] == file_id), None)
+            client_data = select_client_history_by_id(file_id)
             response_solvency_verification = ""
             if client_data:
                 # Process the file using the corresponding data
                 monthly_expenses = float(response["depenses_mensuelles"].replace('€', ''))
-                monthly_income = float(response["revenu_mensuelles"].replace('€', ''))
+                monthly_income = float(response["revenu_mensuel"].replace('€', ''))
                 loan_amount = float(response["montant_pret_demande"].replace('€', ''))
 
                 # request = client_scoring.factory.create('CreditScoreRequest')
@@ -85,8 +88,9 @@ class FileHandler(FileSystemEventHandler):
                 except:
                     print("Erreur INVALID Token for scoring_service!")
                     return
-                              # response_scoring = client_scoring.service.calculate_credit_score(request)
                 print(response_scoring)
+                update_scoring_by_id(response["id_demande_pret"], response_scoring)
+
 
                 '''response_solvency_verification = client_solvency_verification.service.verify_solvency(credit_score,
                                                                                                       monthly_expenses,
@@ -107,6 +111,8 @@ class FileHandler(FileSystemEventHandler):
 
                 #response2 = str(response_solvency_verification)
                 print(f"Client ID: {file_id}, JSON:{response['id']}, Résultat: {response_solvency_verification}")
+                update_solvency_by_id(response["id_demande_pret"], response_solvency_verification)
+
 
             else:
                 print(f"Données JSON manquantes pour le client ID : {file_id}")
@@ -114,21 +120,11 @@ class FileHandler(FileSystemEventHandler):
             # third Service
             property_description = str(response["description_de_propriete"])
 
-          #  property_info = clientService3.factory.create('PropertyDescription')
-           # property_info.Description = property_description
 
-          #  market_data = clientService3.factory.create('MarketData')
             RecentSalesData = 'Données du marché immobilier récentes ici'
 
-          #  inspection_info = clientService3.factory.create('InspectionInfo')
-          #  inspection_info.InspectionVirtuelle = True  # True ou False en fonction de l'inspection
             inspectionInfo = InspectionInfo(True, False)
-          #  inspection_info.InspectionSurPlace = False  # True ou False en fonction de l'inspection
 
-           # legal_compliance = clientService3.factory.create('LegalCompliance')
-           # legal_compliance.LitigesFonciersEnCours = False  # True ou False en fonction des litiges fonciers
-         #   legal_compliance.ConformiteReglementsBatiment = True  # True ou False en fonction de la conformité
-          #  legal_compliance.EligibilitePretImmobilier = True  # True ou False en fonction de l'éligibilité
             legal_compliance = LegalCompliance(False, True, True)
 
             # Call the SOAP service to process the new file and pass the property description
@@ -145,6 +141,8 @@ class FileHandler(FileSystemEventHandler):
                 return
 
             print(f"Résultat de l'évaluation : {response3['PropertyValuation']}")
+            update_property_valuation_by_id(response["id_demande_pret"], response3['PropertyValuation'])
+
             print(f"Résultat de l'inspection : {response3['InspectionResult']}")
             print(f"Résultat de la conformité : {response3['ComplianceResult']}")
 
@@ -163,6 +161,7 @@ class FileHandler(FileSystemEventHandler):
                 return
 
             print(response4)
+            update_decision_by_id(response["id_demande_pret"], response4)
 
 
 

@@ -31,14 +31,13 @@ async def read_file(file_name, credentials: HTTPAuthorizationCredentials = Depen
             # Define patterns for extracting information
             patterns = {
                 'nom_client': r"je m'appelle (\w+ \w+),",
-                'adresse': r"je vis au (\d+ [a-zA-Z\s]+) a ([a-zA-Z]+)\.",
+                'adresse': r"je vis au (\d+ [\w\s]+).",
                 'email': r"par mail : (.+@.+\..+)",
                 'num_de_tel': r"me contacter : \+(\d+)",
                 'montant_pret_demande': r"pret de (\d+€)",
                 'duree_pret': r"pour (\d+) ans",
                 'revenu_mensuel': r"je gagne (\d+€)",
                 'depenses_mensuelles': r"depenses environ (\d+€)",
-                'statut_demande': "pending"
             }
 
             extracted_info = {}
@@ -51,15 +50,20 @@ async def read_file(file_name, credentials: HTTPAuthorizationCredentials = Depen
             # Créer une seule chaîne de caractères à partir des correspondances
             description_complete = ",".join(matches)
             extracted_info["description_de_propriete"] = description_complete
+            extracted_info["statut_demande"] = "pending"
+
 
             for category, pattern in patterns.items():
                 match = re.search(pattern, content, re.IGNORECASE)
                 if match:
                     extracted_info[category] = match.group(1)
+            print(extracted_info)
             response = insert_demande_pret(extracted_info)
             if response != -1:
                 print("Demande insérée avec succès")
-                return response
+                return {"id_demande_pret": response}
+            else:
+                return {"error": "Une erreur s'est produite lors de l'insertion de la demande de prêt.","dict": extracted_info}
 
 
     except FileNotFoundError:
@@ -72,4 +76,4 @@ async def read_file(file_name, credentials: HTTPAuthorizationCredentials = Depen
 
 if __name__ == '__main__':
 
-    uvicorn.run(app, host="localhost", port=8001)
+    uvicorn.run(app, host="localhost", port=8009)
