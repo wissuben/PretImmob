@@ -1,42 +1,37 @@
-from client import *
-from client_history import get_client_history
-from demande_pret import get_demandes_pret, insert_demande_pret, select_demande_pret_by_id, update_demande_pret_by_id, update_scoring_by_id, update_solvency_by_id
+import hashlib
 
+def hash_password(password, key):
+    """Hashes the password using a key."""
+    # Concatenate the password and the key
+    combined_str = password + key
+    # Encode the string to bytes
+    combined_bytes = combined_str.encode('utf-8')
+    # Hash the bytes using SHA-256
+    hashed_bytes = hashlib.sha256(combined_bytes)
+    # Return the hexadecimal representation of the hash
+    return hashed_bytes.hexdigest()
 
-print(get_clients())
+def verify_password(password, key, hashed_password):
+    """Verifies if the provided password corresponds to the given hashed password and key."""
+    # Hash the provided password using the same key
+    hashed_input = hash_password(password, key)
+    # Compare the hashed input with the provided hashed password
+    return hashed_input == hashed_password
 
-patterns = {
-                'nom_client': "1",
-                'adresse': "velizy",
-                'email': "lolo@gmail.com",
-                'num_de_tel': "0677777777",
-                'montant_pret_demande': "10000",
-                'duree_pret': "5",
-                'revenu_mensuel': "1234",
-                'depenses_mensuelles': "123",
-                'statut_demande': "pending",
-                'description_de_propriete': "jardin"
-            }
-#print(insert_demande_pret(patterns))
-print(get_demandes_pret())
-print(select_demande_pret_by_id(10))
+# Example usage:
+password = "wissuwissu"
+key = "somesecretkey"
 
-patterns = {
-                'nom_client': "1",
-                'adresse': "eljadida",
-                'email': "lolo@gmail.com",
-                'num_de_tel': "0677777777",
-                'montant_pret_demande': "10000",
-                'duree_pret': "5",
-                'revenu_mensuel': "1234",
-                'depenses_mensuelles': "123",
-                'statut_demande': "pending",
-                'description_de_propriete': "jardin"
-            }
+# Hash the password using the key
+hashed_password = hash_password(password, key)
+print("Hashed password:", hashed_password)
 
-print(update_demande_pret_by_id(10, patterns))
-print(select_demande_pret_by_id(10))
-update_solvency_by_id(10, True)
-update_scoring_by_id(10, 50)
-print(select_demande_pret_by_id(10))
+hashed_password = hash_password(password, key)
+print("Hashed password:", hashed_password)
 
+# Verify if a provided password matches the hashed password
+input_password = "mysecretpassword"
+if verify_password(input_password, key, hashed_password):
+    print("Password is correct!")
+else:
+    print("Incorrect password!")

@@ -26,13 +26,14 @@ def insert_demande_pret(nouvelle_demande):
     try:
         # Exemple de requête d'insertion, ajustez selon vos besoins
         insert_query = """
-            INSERT INTO demande_pret (nom_client, adresse, email, num_de_tel, montant_pret_demande, 
+            INSERT INTO demande_pret (id_client, nom_client, adresse, email, num_de_tel, montant_pret_demande, 
                                       duree_pret, revenu_mensuel, depenses_mensuelles, statut_demande, description_de_propriete)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
 
         # Exécution de la requête d'insertion avec les valeurs fournies
         cursor.execute(insert_query, (
+            nouvelle_demande['id_client'],
             nouvelle_demande['nom_client'],
             nouvelle_demande['adresse'],
             nouvelle_demande['email'],

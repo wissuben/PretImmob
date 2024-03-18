@@ -4,18 +4,19 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from db_services.demande_pret import insert_demande_pret
-
+from db_services.client import insert_client
 
 app = FastAPI()
 securite = HTTPBearer()
-
 
 token_secret = "fdfdfdfdfdgrghth"
 
 headers = {
     'Content-Type': 'application/json',
-    'Authorization' : f"Bearer {token_secret}"
+    'Authorization': f"Bearer {token_secret}"
 }
+
+
 @app.post("/read_file/")
 async def read_file(file_name, credentials: HTTPAuthorizationCredentials = Depends(securite)):
     if credentials.credentials != token_secret:
@@ -30,6 +31,7 @@ async def read_file(file_name, credentials: HTTPAuthorizationCredentials = Depen
 
             # Define patterns for extracting information
             patterns = {
+                'id_client': r"Numéro du compte: (\d+)",  # Exemple de pattern pour extraire le nom du client
                 'nom_client': r"je m'appelle (\w+ \w+),",
                 'adresse': r"je vis au (\d+ [\w\s]+).",
                 'email': r"par mail : (.+@.+\..+)",
@@ -51,19 +53,23 @@ async def read_file(file_name, credentials: HTTPAuthorizationCredentials = Depen
             description_complete = ",".join(matches)
             extracted_info["description_de_propriete"] = description_complete
             extracted_info["statut_demande"] = "pending"
-
+            extracted_info["password"] = "password"
 
             for category, pattern in patterns.items():
                 match = re.search(pattern, content, re.IGNORECASE)
                 if match:
                     extracted_info[category] = match.group(1)
             print(extracted_info)
+
+            # insert_client(extracted_info['nom_client'], extracted_info['password'])
             response = insert_demande_pret(extracted_info)
+
             if response != -1:
                 print("Demande insérée avec succès")
                 return {"id_demande_pret": response}
             else:
-                return {"error": "Une erreur s'est produite lors de l'insertion de la demande de prêt.","dict": extracted_info}
+                return {"error": "Une erreur s'est produite lors de l'insertion de la demande de prêt.",
+                        "dict": extracted_info}
 
 
     except FileNotFoundError:
@@ -75,5 +81,4 @@ async def read_file(file_name, credentials: HTTPAuthorizationCredentials = Depen
 
 
 if __name__ == '__main__':
-
     uvicorn.run(app, host="localhost", port=8009)
