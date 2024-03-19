@@ -8,7 +8,7 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-image: url('/interface/assets/pic1.png'); /* Remplacez 'url_de_votre_image.jpg' par le chemin de votre image */
+            background-image: url('https://cdn4.vectorstock.com/i/1000x1000/16/53/handshake-businessmen-making-a-deal-vector-5721653.jpg'); /* Remplacez 'url_de_votre_image.jpg' par le chemin de votre image */
             background-size: cover;
             background-position: center;
             margin: 0;
@@ -85,11 +85,44 @@
             color: red;
             margin-top: 10px;
         }
+          /* Styling for the error message */
+  #error-message {
+    display: none;
+    padding: 10px;
+    background-color: #ffcccc;
+    color: #cc0000;
+    border: 1px solid #cc0000;
+    margin-bottom: 10px;
+  }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Connexion</h2>
+        <!-- Error message div -->
+<div id="error-message"></div>
+
+<script>
+  // Function to parse GET parameters from URL
+  function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
+
+  // Check if there's an error parameter in the URL
+  var error = getParameterByName('error');
+
+  // Display error message if error parameter exists
+  if (error) {
+    document.getElementById('error-message').innerText = error;
+    document.getElementById('error-message').style.display = 'block';
+  }
+</script>
         <form action="http://localhost:8000/login" method="post">
             <div class="input-group">
                 <label for="id_client">Nom d'utilisateur :</label>

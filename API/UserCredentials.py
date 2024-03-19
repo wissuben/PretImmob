@@ -1,19 +1,34 @@
-from fastapi import FastAPI, HTTPException, Form, UploadFile
-from fastapi.responses import FileResponse
-from fastapi.params import File, Depends
+import time
+from urllib.parse import urlencode
+
+from fastapi import FastAPI, Form, UploadFile
+from fastapi.params import File
+
 from pydantic import BaseModel
 import shutil
-from starlette.responses import RedirectResponse
+from starlette.responses import FileResponse
 from starlette.staticfiles import StaticFiles
 
-from authentification import authenticate_user
+from services.authentification import authenticate_user
 import uvicorn
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="../interface"), name="static")
 class UserCredentials(BaseModel):
     id_client: str
     password: str
+
+@app.get("/", response_class=FileResponse)
+async def auth(error: str = None):
+    # Construct the URL with query parameters
+    url_with_query = "../interface/authentification.html"
+    if error:
+        url_with_query += "?" + urlencode({"error": error})
+
+    # Serve the file with FileResponse
+    return FileResponse(url_with_query)
+
 
 
 # Route pour gérer la requête POST du formulaire d'authentification
@@ -21,13 +36,15 @@ class UserCredentials(BaseModel):
 async def login(id_client: str = Form(...), password: str = Form(...)):
     # Vérifiez les informations d'authentification ici
     if authenticate_user(id_client, password):
-        return FileResponse("../interface/upload_file.html")
+        token = ""
+        file_url = f"../interface/upload_file.html"
+        return FileResponse(file_url)
     else:
-        raise HTTPException(status_code=401,
-                            detail="Échec de l'authentification : nom d'utilisateur ou mot de passe incorrect.")
+        # Récupérer le message d'erreur de la requête POST
+        error = "Échec de l'authentification. Veuillez vérifier vos identifiants."
+        # Rediriger vers la route "/" avec l'erreur en paramètre GET
+        return await auth(error=error)
 
-
-# File upload endpoint
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     # Spécifiez le chemin où vous souhaitez enregistrer le fichier
@@ -38,8 +55,9 @@ async def upload_file(file: UploadFile = File(...)):
         # Copiez les données du fichier téléchargé dans le fichier sur le serveur
         shutil.copyfileobj(file.file, buffer)
 
-    return {"filename": file.filename, "message": "Fichier téléchargé avec succès"}
-
+    file_url = f"../output/result.html"
+    time.sleep(10)
+    return FileResponse(file_url)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="localhost", port=8000)
